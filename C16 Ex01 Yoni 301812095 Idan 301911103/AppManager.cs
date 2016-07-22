@@ -4,10 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
+
 namespace C16_Ex01_Yoni_301812095_Idan_301911103
 {
     public class AppManager
     {
+        public LoggedInUserData m_UserLoggedInData;
         public AppManager() {}
         public void Start()
         {   
