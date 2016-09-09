@@ -8,260 +8,383 @@ using System.Text;
 using System.Windows.Forms;
 using FacebookWrapper.ObjectModel;
 using FacebookWrapper;
+using System.Threading;
 
 namespace C16_Ex01_Yoni_301812095_Idan_301911103
 {
     public partial class FormFacebook : Form
     {
+        private List<string> m_NameOfWhoLikedSelectedPost;
+        private int m_LastPostIndexToGet = 0;
+        private List<PostDataHolder> m_Posts;
+
         public FormFacebook()
         {
             InitializeComponent();
-            FacebookWrapper.FacebookService.s_CollectionLimit = 1000;
+            m_NameOfWhoLikedSelectedPost = new List<string>();
+           
+
         }
 
-        User m_LoggedInUser;
-
-
-        private void loginAndInit()
+        private void getAllPost()
         {
-            /// Owner: design.patterns
+            m_Posts = LoggedInUser.Instance().GetPostsData(0);
+        }
 
-            /// Use the FacebookService.Login method to display the login form to any user who wish to use this application.
-            /// You can then save the result.AccessToken for future auto-connect to this user:
-            LoginResult result = FacebookService.Login("1450160541956417", /// (desig patter's "Design Patterns Course App 2.4" app)
-                "public_profile", 
-                "user_education_history",
-                "user_birthday",
-                "user_actions.video",
-                "user_actions.news",
-                "user_actions.music",
-                "user_actions.fitness",
-                "user_actions.books",
-                "user_about_me",
-                "user_friends",
-                "publish_actions",
-                "user_events",
-                "user_games_activity",
-                //"user_groups" (This permission is only available for apps using Graph API version v2.3 or older.)
-                "user_hometown",
-                "user_likes",
-                "user_location",
-                "user_managed_groups",
-                "user_photos",
-                "user_posts",
-                "user_relationships",
-                "user_relationship_details",
-                "user_religion_politics",
+        private void fetchUserData()
+        {
+            new Thread(updateProfilePicture).Start();
+            new Thread(fetchfriends).Start();
+            new Thread(updateCoverPicture).Start();
+            new Thread(updateUserName).Start();
 
-                //"user_status" (This permission is only available for apps using Graph API version v2.3 or older.)
-                "user_tagged_places",
-                "user_videos",
-                "user_website",
-                "user_work_history",
-                "read_custom_friendlists",
+        }
 
-                // "read_mailbox", (This permission is only available for apps using Graph API version v2.3 or older.)
-                "read_page_mailboxes",
-                // "read_stream", (This permission is only available for apps using Graph API version v2.3 or older.)
-                // "manage_notifications", (This permission is only available for apps using Graph API version v2.3 or older.)
-                "manage_pages",
-                "publish_pages",
-                "publish_actions",
+        private void fetchPostAndUpdateTheWall()
+        {
+            getAllPost();
+            updateWall();
+        }
 
-                "rsvp_event"
-                );
-                    // These are NOT the complete list of permissions. Other permissions for example:
-                    // "user_birthday", "user_education_history", "user_hometown", "user_likes","user_location","user_relationships","user_relationship_details","user_religion_politics", "user_videos", "user_website", "user_work_history", "email","read_insights","rsvp_event","manage_pages"
-		            // The documentation regarding facebook login and permissions can be found here: 
-                    // https://developers.facebook.com/docs/facebook-login/permissions#reference
+        private void updateWall()
+        {
+            const int k_zero = 0;
 
-
-            if (!string.IsNullOrEmpty(result.AccessToken))
+            try
             {
-                m_LoggedInUser = result.LoggedInUser;
-                fetchUserInfo();
+                listBoxWall.Invoke(new Action(()=>
+                    {
+                        
+                        postDataHolderBindingSource.DataSource = m_Posts;
+                        if (this.listBoxWall.Items.Count > k_zero)
+                        {
+                            this.listBoxWall.SelectedIndex = k_zero;
+                        }
+
+
+                    }));
             }
-            else
+            catch(Exception e)
             {
-                MessageBox.Show(result.ErrorMessage);
+                MessageBox.Show(e.ToString());
             }
+           
+            
+        }
+      
+
+        private void updateProfilePicture()
+        {
+            ProfielpictureBox.Invoke(new Action(() => { ProfielpictureBox.LoadAsync(LoggedInUser.Instance().GetProfilePicture()); }));
         }
 
-        private void fetchUserInfo()
+
+        private void updateCoverPicture()
         {
-            picture_smallPictureBox.LoadAsync(m_LoggedInUser.PictureNormalURL);
-            if (m_LoggedInUser.Posts.Count > 0)
+            CoverpictureBox.Invoke(new Action(() => { CoverpictureBox.LoadAsync(LoggedInUser.Instance().GetCoverPicture()); }));
+        }
+
+        private void updateUserName()
+        {
+            FirsrNamelabel.Invoke(new Action(() => { FirsrNamelabel.Text = LoggedInUser.Instance().GetFirstName(); }));
+            LastNamelabel.Invoke(new Action(() => { LastNamelabel.Text = LoggedInUser.Instance().GetLastName(); }));
+            
+        }
+
+        private void PostextBox_MouseEnter(object sender, EventArgs e)
+        {
+
+            string defultStatus = "Whats on your mind ? ";
+            if (PostextBox.Text == defultStatus)
             {
-                textBoxStatus.Text = m_LoggedInUser.Posts[0].Message; 
+                PostextBox.Text = string.Empty;
             }
-        }
 
-        private void buttonLogin_Click(object sender, EventArgs e)
-        {
-            loginAndInit();
-        }
-
-        private void buttonSetStatus_Click(object sender, EventArgs e)
-        {
-            Status postedStatus = m_LoggedInUser.PostStatus(textBoxStatus.Text);
-            MessageBox.Show("Status Posted! ID: " + postedStatus.Id);
 
         }
 
-        private void linkPosts_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        
+
+        private void PostButton_Click(object sender, EventArgs e)
         {
-            fetchPosts();
+            LoggedInUser.Instance().PostStatus(PostextBox.Text);
+            PostextBox.Text = string.Empty;
+            
         }
 
-        private void fetchPosts()
+        private void fetchfriends()
         {
-            foreach (Post post in m_LoggedInUser.Posts)
+            listBoxFriends.Invoke(new Action(() =>
             {
-                if (post.Message != null)
+
+                string unknowUserPicUrl = "https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcRg7sqvEEQjipFVPNEuizNSE_KhUBY5IgwkOkUNU3of52M47X7F";
+                this.FriendpictureBox.LoadAsync(unknowUserPicUrl);
+                this.listBoxFriends.Items.Clear();
+                const int k_Zero = 0;
+                List<string> friendsNameList = LoggedInUser.Instance().GetFreindsNames();
+                if (friendsNameList.Count > k_Zero)
                 {
-                    listBoxPosts.Items.Add(post.Message);
+                    foreach (string friendName in friendsNameList)
+                    {
+                        listBoxFriends.Items.Add(friendName);
+                    }
                 }
-                else if (post.Caption != null)
-                {
-                    listBoxPosts.Items.Add(post.Caption);
-                }
+
                 else
                 {
-                    listBoxPosts.Items.Add(string.Format("[{0}]", post.Type));
+                    string haveNoFriendError = string.Format("{0} dont have any friends", LoggedInUser.Instance().GetFirstName());
+                    listBoxFriends.Items.Add(haveNoFriendError);
                 }
-            }
 
-            if (m_LoggedInUser.Posts.Count == 0)
-            {
-                MessageBox.Show("No Posts to retrieve :(");
             }
+            ));
+           
         }
 
-        private void linkFriends_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            fetchFriends();
-        }
-
-        private void fetchFriends()
-        {
-            listBoxFriends.Items.Clear();
-            listBoxFriends.DisplayMember = "Name";
-            foreach (User friend in m_LoggedInUser.Friends)
-            {
-                listBoxFriends.Items.Add(friend);
-                friend.ReFetch(DynamicWrapper.eLoadOptions.Full);
-            }
-
-            if (m_LoggedInUser.Friends.Count == 0)
-            {
-                MessageBox.Show("No Friends to retrieve :(");
-            }
-        }
 
         private void listBoxFriends_SelectedIndexChanged(object sender, EventArgs e)
         {
-            displaySelectedFriend();
+            fetSelectedFrindPic();
         }
 
-        private void displaySelectedFriend()
+        private void fetSelectedFrindPic()
         {
-            if (listBoxFriends.SelectedItems.Count == 1)
+            string PictureLargeURL;
+            string selectedFriend = listBoxFriends.SelectedItem.ToString();
+            PictureLargeURL = LoggedInUser.Instance().GetImageUrlBySelectedFriend(selectedFriend);
+            if (PictureLargeURL != null)
             {
-                User selectedFriend = listBoxFriends.SelectedItem as User;
-                if (selectedFriend.PictureNormalURL != null)
+                FriendpictureBox.LoadAsync(PictureLargeURL);
+            }
+            else
+            {
+                FriendpictureBox.Image = FriendpictureBox.ErrorImage;
+            }
+
+        }
+
+     
+        private void listBoxWall_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            
+            object selectedPost = listBoxWall.SelectedItem;
+            PostDataHolder selectedPostData = selectedPost as PostDataHolder;
+            listBoxSearchResults.Items.Clear();
+            UpdatePostDataBySelectedPost(selectedPostData);
+                
+
+
+
+        }
+
+        private void UpdatePostDataBySelectedPost(PostDataHolder i_SelectedPostData)
+        {
+            updatedLikeNumberBySelectedPost(i_SelectedPostData.LikesNumber);
+            updatedPictureOfSelectedPost(i_SelectedPostData.PostUrl);
+            updatedCommentsOfSelectedPost(i_SelectedPostData.Commnets);
+            m_NameOfWhoLikedSelectedPost = i_SelectedPostData.WhoLikedNamesList;
+            
+        }
+
+        private void updatedCommentsOfSelectedPost(List<string> i_Commnets)
+        {
+            listBoxPostComments.Items.Clear();
+            const int k_Zero = 0;
+            if (i_Commnets.Count > k_Zero)
+            {
+                foreach (string comment in i_Commnets)
                 {
-                    pictureBoxFriend.LoadAsync(selectedFriend.PictureNormalURL);
+                    listBoxPostComments.Items.Add(comment);
+                }
+            }
+            else
+            {
+                const string k_NoOfCommentMessages = "This Post dont have any comments";
+                listBoxPostComments.Items.Add(k_NoOfCommentMessages);
+            }
+        }
+
+        private void updatedPictureOfSelectedPost(string i_PostUrl)
+        {
+            const string k_NoPicUrl = "https://i.imgur.com/8EMJr2i.png";
+            if (i_PostUrl != null)
+            {
+                pictureBoxWall.LoadAsync(i_PostUrl);
+                
+            }
+            else
+            {
+                pictureBoxWall.LoadAsync(k_NoPicUrl);
+            }
+
+        }
+
+        private void updatedLikeNumberBySelectedPost(int i_LikesCount)
+        {
+            labelLikeNumberToPost.Text = Convert.ToString(i_LikesCount);
+        }
+
+        private void textBoxSearchLikers_TextChanged(object sender, EventArgs e)
+        {
+            showToUserSearchOptions(textBoxSearchLikers.Text);
+        }
+
+        private void showToUserSearchOptions(string I_UserSearchText)
+        {
+
+            if (I_UserSearchText != string.Empty)
+            {
+                foreach (string name in m_NameOfWhoLikedSelectedPost)
+                {
+                    if (name.StartsWith(I_UserSearchText) && !listBoxSearchResults.Items.Contains(name))
+                    {
+                        listBoxSearchResults.Items.Add(name);
+                    }
+                }
+            }
+
+            for (int i = listBoxSearchResults.Items.Count - 1; i >= 0; i--)
+            {
+                string name = listBoxSearchResults.Items[i] as String;
+                if (!name.StartsWith(I_UserSearchText))
+                {
+                    listBoxSearchResults.Items.RemoveAt(i);
+                }
+            }
+        }
+
+        private void listBoxSearchResults_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            updateFriendPhotoBySearch();
+        }
+
+        private void updateFriendPhotoBySearch()
+        {
+            try
+            {
+                string friendUrl = LoggedInUser.Instance().GetImageUrlBySelectedFriend(listBoxSearchResults.SelectedItem.ToString());
+                if (friendUrl != null)
+                {
+                    FriendpictureBox.LoadAsync(friendUrl);
                 }
                 else
                 {
-                    picture_smallPictureBox.Image = picture_smallPictureBox.ErrorImage;
+                    const string k_NoPicUrl = "https://i.imgur.com/8EMJr2i.png";
+                    FriendpictureBox.LoadAsync(k_NoPicUrl);
+                    MessageBox.Show("This friend don't have permissions in your app");
                 }
             }
-        }
-
-        private void labelEvents_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            fetchEvents();
-        }
-
-        private void fetchEvents()
-        {
-            listBoxEvents.Items.Clear();
-            listBoxEvents.DisplayMember = "Name";
-            foreach (Event fbEvent in m_LoggedInUser.Events)
+            catch(Exception e)
             {
-                listBoxEvents.Items.Add(fbEvent);
-            }
-
-            if (m_LoggedInUser.Events.Count == 0)
-            {
-                MessageBox.Show("No Events to retrieve :(");
+                MessageBox.Show("You dont have permissions to see this freind picture");
             }
         }
 
-        private void listBoxEvents_SelectedIndexChanged(object sender, EventArgs e)
+        private void buttonLoadPosta_Click(object sender, EventArgs e)
         {
-            if (listBoxEvents.SelectedItems.Count == 1)
+            new Thread(loadMorePostToWall).Start();
+        }
+
+        private void loadMorePostToWall()
+        {
+          
+            m_LastPostIndexToGet = LoggedInUser.Instance().GetLastPostIndex();
+            updateWall();
+        }
+
+        private void buttonSaveBlessing_Click(object sender, EventArgs e)
+        {
+            if(textBoxBlessing.Text != string.Empty)
             {
-                Event selectedEvent = listBoxEvents.SelectedItem as Event;
-                pictureBoxEvent.LoadAsync(selectedEvent.PictureNormalURL);
+                saveUserBless();
+            }
+            else
+            {
+                MessageBox.Show("Please dont save empty blessing");
+            }
+
+        }
+
+        private void saveUserBless()
+        {
+            try
+            {
+                bool isFemaleBless = false;
+                if (this.checkBoxIsFemaleBlessing.Checked)
+                {
+                    isFemaleBless = true;
+                }
+
+                LoggedInUser.Instance().SaveUserBlessings(isFemaleBless, textBoxBlessing.Text);
+                textBoxBlessing.Text = string.Empty;
+                MessageBox.Show("Blessing was saved");
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message);
             }
         }
 
-        private void linkCheckins_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void buttonBlessFriends_Click(object sender, EventArgs e)
         {
-            fetchCheckins();
+            greatingYourFriends();
         }
 
-        private void fetchCheckins()
+        private void greatingYourFriends()
         {
-            foreach (Checkin checkin in m_LoggedInUser.Checkins)
+            try
             {
-                listBoxCheckins.Items.Add(checkin.Place.Name);
+                const int k_zero = 0;
+                List<Dictionary<string, string>> friends = LoggedInUser.Instance().BlessFriendWhoHaveABirthDay();
+                if (friends.Count > k_zero)
+                {
+
+                    foreach (Dictionary<string, string> friend in friends)
+                    {
+
+                        listBoxGreeting.Items.Add(friend.Keys.ToString());
+                    }
+                }
             }
-
-            if (m_LoggedInUser.Checkins.Count == 0)
+            catch (Exception ex)
             {
-                MessageBox.Show("No Checkins to retrieve :(");
-            }
-        }
-
-        private void linkPages_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            fetchPages();
-        }
-
-        private void fetchPages()
-        {
-            listBoxPages.Items.Clear();
-            listBoxPages.DisplayMember = "Name";
-
-            foreach (Page page in m_LoggedInUser.LikedPages)
-            {
-                listBoxPages.Items.Add(page);
-            }
-
-            if (m_LoggedInUser.LikedPages.Count == 0)
-            {
-                MessageBox.Show("No liked pages to retrieve :(");
+                MessageBox.Show(ex.Message);
             }
         }
 
-        private void listBoxPages_SelectedIndexChanged(object sender, EventArgs e)
+        private void FormFacebook_Shown(object sender, EventArgs e)
         {
-            if (listBoxPages.SelectedItems.Count == 1)
-            {
-                Page selectedPage = listBoxPages.SelectedItem as Page;
-                pictureBoxPage.LoadAsync(selectedPage.PictureNormalURL);
-            }
+            fetchUserData();
         }
 
-        private void linkUserActions_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void FormFacebook_Load(object sender, EventArgs e)
         {
-            string actionType = comboBoxActionType.SelectedItem.ToString();
-            FacebookObjectCollection<Page> actions = FacebookService.GetCollection<Page>(actionType);
-            dynamic actionsData = FacebookService.GetDynamicData(actionType);
-            dataGridViewActions.DataSource = actions;
+            
+        }
+
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+
+            new Thread(fetchPostAndUpdateTheWall).Start();
+        }
+
+        private void FormFacebook_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void buttonCollageForm_Click(object sender, EventArgs e)
+        {
+            FormCollage fc = new FormCollage();
+            fc.Show();
+        }
+
+        private void buttonTopCheckins_Click(object sender, EventArgs e)
+        {
+            FormTopCheckin fr = new FormTopCheckin();
+            fr.Show();
+
         }
     }
 

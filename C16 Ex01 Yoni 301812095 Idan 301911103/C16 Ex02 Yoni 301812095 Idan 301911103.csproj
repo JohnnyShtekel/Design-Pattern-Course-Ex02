@@ -33,10 +33,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Facebook">
-      <HintPath>FBApi\Facebook.dll</HintPath>
+      <HintPath>..\FBApi\Facebook.dll</HintPath>
     </Reference>
     <Reference Include="FbGraphApiWrapper">
-      <HintPath>FBApi\FbGraphApiWrapper.dll</HintPath>
+      <HintPath>..\FBApi\FbGraphApiWrapper.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -51,6 +51,20 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AppManager.cs" />
+    <Compile Include="checkins\eStars.cs" />
+    <Compile Include="checkins\SpecialCheckin.cs" />
+    <Compile Include="checkins\ISpecialCheckin.cs" />
+    <Compile Include="collage\BaseCollage.cs" />
+    <Compile Include="collage\CollageFactory.cs" />
+    <Compile Include="collage\eCollageType.cs" />
+    <Compile Include="collage\NewPhotosCollage.cs" />
+    <Compile Include="collage\OldPhotosCollage.cs" />
+    <Compile Include="FormCollage.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormCollage.Designer.cs">
+      <DependentUpon>FormCollage.cs</DependentUpon>
+    </Compile>
     <Compile Include="FormFacebook.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -63,14 +77,27 @@
     <Compile Include="FormLogin.Designer.cs">
       <DependentUpon>FormLogin.cs</DependentUpon>
     </Compile>
-    <Compile Include="LoggedInUserData.cs" />
+    <Compile Include="FormTopChekin.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormTopChekin.Designer.cs">
+      <DependentUpon>FormTopChekin.cs</DependentUpon>
+    </Compile>
+    <Compile Include="LoggedInUser.cs" />
+    <Compile Include="PostDataHolder.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="FormCollage.resx">
+      <DependentUpon>FormCollage.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="FormFacebook.resx">
       <DependentUpon>FormFacebook.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FormLogin.resx">
       <DependentUpon>FormLogin.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormTopChekin.resx">
+      <DependentUpon>FormTopChekin.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -82,6 +109,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <None Include="Properties\DataSources\PostDataHolder.datasource" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -94,6 +122,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="content\FacebookLogoCover.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="content\tumblr-post-button.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -3,7 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "C16 Ex01 Yoni 301812095 Idan 301911103", "C16 Ex01 Yoni 301812095 Idan 301911103\C16 Ex01 Yoni 301812095 Idan 301911103.csproj", "{6F794B36-423C-4CE9-8A6B-68C5F31BDA8B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "C16 Ex02 Yoni 301812095 Idan 301911103", "C16 Ex01 Yoni 301812095 Idan 301911103\C16 Ex02 Yoni 301812095 Idan 301911103.csproj", "{6F794B36-423C-4CE9-8A6B-68C5F31BDA8B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7A8DEA51-47CB-4FB0-B891-50E618917FAA}"
+	ProjectSection(SolutionItems) = preProject
+		DP_Ex02_TemplateForStudents .docx = DP_Ex02_TemplateForStudents .docx
+		TextFile.txt = TextFile.txt
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
